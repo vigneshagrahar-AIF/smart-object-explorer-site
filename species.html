@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Species Card</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#020617" />
+  <link rel="manifest" href="manifest.json" />
+
+  <style>
+  :root{
+    --bg: #020617;
+    --panel: rgba(15,23,42,0.96);
+    --panel-soft: rgba(15,23,42,0.9);
+    --accent-1: #22c55e;
+    --accent-2: #0ea5e9;
+    --accent-3: #a855f7;
+    --accent-warm: #fb923c;
+    --text: #e5e7eb;
+    --muted: #9ca3af;
+    --border-subtle: rgba(148,163,184,0.4);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family: system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    background:
+      radial-gradient(circle at top left,rgba(56,189,248,0.18),transparent 55%),
+      radial-gradient(circle at bottom right,rgba(94,234,212,0.18),transparent 55%),
+      #020617;
+    color:var(--text);
+    min-height:100vh;
+    padding:12px 12px 78px 12px; /* extra bottom for nav */
+    display:flex;
+    justify-content:center;
+    align-items:flex-start;
+  }
+
+  .shell{
+    width:100%;
+    max-width:960px;
+    margin-top:12px;
+    margin-bottom:24px;
+  }
+
+  .topbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    margin-bottom:10px;
+  }
+  .app-title{
+    display:flex;
+    gap:8px;
+    align-items:center;
+  }
+  .app-icon{
+    width:26px;height:26px;border-radius:9px;
+    background:conic-gradient(from 120deg,#22c55e,#0ea5e9,#a855f7);
+    box-shadow:0 0 18px rgba(34,197,94,0.7);
+  }
+  .app-title-main{
+    font-weight:700;
+    font-size:1.05rem;
+  }
+  .app-title-sub{
+    font-size:0.72rem;
+    color:var(--muted);
+  }
+
+  .chip-compact{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    font-size:0.75rem;
+    padding:4px 9px;
+    border-radius:999px;
+    border:1px solid rgba(148,163,184,0.55);
+    background:rgba(15,23,42,0.96);
+    color:var(--text);
+    cursor:pointer;
+  }
+
+  .hero{
+    border-radius:18px;
+    overflow:hidden;
+    background:radial-gradient(circle at top,rgba(15,23,42,0.9),rgba(15,23,42,0.98));
+    border:1px solid rgba(148,163,184,0.45);
+    box-shadow:0 24px 60px rgba(15,23,42,0.95);
+  }
+
+  .hero-top{
+    position:relative;
+    padding:14px 14px 12px 14px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .hero-bg{
+    position:absolute;
+    inset:0;
+    background:radial-gradient(circle at top,rgba(15,23,42,0.3),transparent 70%);
+    pointer-events:none;
+  }
+  .hero-inner{
+    position:relative;
+    z-index:1;
+  }
+
+  .name-row{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+  }
+  .common-name{
+    font-size:1rem;
+    font-weight:600;
+    color:var(--muted);
+  }
+  .scientific-name{
+    font-size:1.4rem;
+    font-weight:800;
+    letter-spacing:0.04em;
+  }
+  .scientific-name i{
+    font-style:italic;
+  }
+
+  .tags-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-top:4px;
+  }
+  .tag{
+    font-size:0.72rem;
+    padding:3px 8px;
+    border-radius:999px;
+    border:1px solid rgba(148,163,184,0.55);
+    background:rgba(15,23,42,0.96);
+    color:var(--muted);
+  }
+
+  .hero-bottom{
+    border-top:1px solid rgba(148,163,184,0.3);
+    padding:10px 14px 12px 14px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .link-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    border-radius:999px;
+    font-size:0.8rem;
+    font-weight:600;
+    padding:7px 11px;
+    border:1px solid rgba(148,163,184,0.6);
+    background:rgba(15,23,42,0.98);
+    color:var(--text);
+    text-decoration:none;
+    cursor:pointer;
+    transition:transform 0.12s ease,box-shadow 0.12s ease,background 0.12s ease,border-color 0.12s ease;
+  }
+  .btn:hover{
+    transform:translateY(-2px);
+    box-shadow:0 12px 26px rgba(15,23,42,0.9);
+  }
+  .btn-primary{
+    border:none;
+    background:linear-gradient(120deg,#0ea5e9,#6366f1,#a855f7);
+    color:white;
+    box-shadow:0 18px 40px rgba(79,70,229,0.55);
+  }
+  .btn-ghost{
+    background:transparent;
+  }
+
+  .meta-text{
+    font-size:0.8rem;
+    color:var(--muted);
+  }
+
+  .layout{
+    margin-top:14px;
+    display:grid;
+    grid-template-columns: minmax(0,1.2fr) minmax(0,0.95fr);
+    gap:14px;
+  }
+
+  .panel{
+    border-radius:18px;
+    background:var(--panel);
+    border:1px solid rgba(148,163,184,0.42);
+    padding:12px 14px;
+    box-shadow:0 16px 40px rgba(15,23,42,0.9);
+  }
+
+  .panel-heading{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:6px;
+  }
+  .panel-title{
+    font-size:0.86rem;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:0.14em;
+    color:var(--muted);
+  }
+  .section-pill{
+    font-size:0.72rem;
+    padding:3px 7px;
+    border-radius:999px;
+    background:rgba(15,23,42,0.96);
+    border:1px solid rgba(148,163,184,0.4);
+  }
+
+  .gallery-strip{
+    margin-top:4px;
+    display:flex;
+    gap:10px;
+    overflow-x:auto;
+    padding-bottom:6px;
+    scroll-snap-type:x mandatory;
+  }
+  .gallery-item{
+    flex:0 0 76%;
+    max-width:76%;
+    border-radius:14px;
+    overflow:hidden;
+    border:1px solid rgba(148,163,184,0.4);
+    background:rgba(15,23,42,0.9);
+    position:relative;
+    scroll-snap-align:start;
+  }
+  .gallery-item img{
+    width:100%;
+    height:190px;
+    object-fit:cover;
+    display:block;
+  }
+  .gallery-caption{
+    font-size:0.7rem;
+    color:var(--muted);
+    padding:5px 7px 6px 7px;
+  }
+
+  .description{
+    margin-top:4px;
+    font-size:0.9rem;
+    line-height:1.5;
+    color:var(--text);
+  }
+  .description p + p{
+    margin-top:8px;
+  }
+
+  .facts-grid{
+    margin-top:6px;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    font-size:0.8rem;
+  }
+  .fact-card{
+    border-radius:12px;
+    padding:8px 9px;
+    background:rgba(15,23,42,0.96);
+    border:1px solid rgba(148,163,184,0.3);
+  }
+  .fact-label{
+    font-size:0.7rem;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:0.1em;
+    margin-bottom:4px;
+  }
+
+  .badge-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-top:10px;
+  }
+  .badge{
+    font-size:0.72rem;
+    padding:3px 7px;
+    border-radius:999px;
+    border:1px solid rgba(148,163,184,0.4);
+    background:rgba(15,23,42,0.96);
+    color:var(--muted);
+  }
+
+  .status-line{
+    font-size:0.78rem;
+    color:var(--muted);
+    margin-top:4px;
+  }
+
+  .skeleton{
+    background:linear-gradient(
+      90deg,
+      rgba(30,41,59,0.7),
+      rgba(51,65,85,0.95),
+      rgba(30,41,59,0.7)
+    );
+    background-size:200% 100%;
+    animation:skeleton-loading 1.4s ease-in-out infinite;
+  }
+  @keyframes skeleton-loading{
+    0%{background-position:200% 0;}
+    100%{background-position:-200% 0;}
+  }
+
+  /* Bottom nav */
+  .bottom-nav-shell{
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    display:flex;
+    justify-content:center;
+    z-index:50;
+  }
+
+  .bottom-nav{
+    width:100%;
+    max-width:960px;
+    padding:6px 14px 10px;
+  }
+
+  .bottom-nav-inner{
+    border-radius:999px;
+    padding:6px 10px;
+    background:rgba(15,23,42,0.96);
+    border:1px solid rgba(148,163,184,0.5);
+    backdrop-filter:blur(18px);
+    display:flex;
+    justify-content:space-around;
+    gap:6px;
+  }
+
+  .nav-item{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:2px;
+    border:none;
+    background:transparent;
+    color:var(--muted);
+    cursor:pointer;
+    font-size:0.72rem;
+    padding:4px 0;
+  }
+  .nav-item-icon{
+    width:18px;
+    height:18px;
+    border-radius:999px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin-bottom:1px;
+  }
+  .nav-item span{
+    font-size:0.72rem;
+  }
+  .nav-item-active{
+    color:#e5e7eb;
+  }
+  .nav-item-active .nav-item-icon{
+    background:linear-gradient(135deg,var(--accent-2),var(--accent-3));
+    box-shadow:0 10px 24px rgba(56,189,248,0.45);
+  }
+
+  @media (max-width: 860px){
+    body{
+      padding:10px 10px 78px 10px;
+    }
+    .shell{
+      margin-top:6px;
+    }
+    .layout{
+      grid-template-columns:1fr;
+    }
+    .gallery-item{
+      flex:0 0 82%;
+      max-width:82%;
+    }
+  }
+
+  @media (max-width: 520px){
+    .hero-top{
+      padding:12px 12px 10px 12px;
+    }
+    .hero-bottom{
+      padding:9px 12px 11px 12px;
+    }
+    .facts-grid{
+      grid-template-columns:1fr;
+    }
+  }
+  </style>
+</head>
+
+<body>
+  <div class="shell">
+    <div class="topbar">
+      <div class="app-title">
+        <div class="app-icon"></div>
+        <div>
+          <div class="app-title-main">Species Card</div>
+          <div class="app-title-sub">Detailed view for the predicted species</div>
+        </div>
+      </div>
+      <button class="chip-compact" onclick="window.history.back()">
+        ⟵ Back
+      </button>
+    </div>
+
+    <article class="hero" aria-label="Species overview">
+      <div class="hero-top">
+        <div class="hero-bg"></div>
+        <div class="hero-inner">
+          <div class="name-row">
+            <div id="commonName" class="common-name skeleton" style="border-radius:8px;height:14px;width:60%"></div>
+            <div id="scientificName" class="scientific-name">
+              <span class="skeleton" style="display:inline-block;border-radius:8px;height:20px;width:70%"></span>
+            </div>
+          </div>
+
+          <div class="tags-row" id="tagsRow">
+            <span class="tag skeleton" style="width:85px;height:16px;border-radius:999px"></span>
+            <span class="tag skeleton" style="width:95px;height:16px;border-radius:999px"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-bottom">
+        <div class="meta-text" id="sourceLine">
+          Fetching species details from trusted sources…
+        </div>
+        <div class="link-row" id="linkRow">
+          <!-- Buttons injected here -->
+        </div>
+      </div>
+    </article>
+
+    <section class="layout" aria-label="Species details">
+      <!-- LEFT: description & facts -->
+      <section class="panel" aria-label="Description and facts">
+        <div class="panel-heading">
+          <div class="panel-title">Profile</div>
+          <div class="section-pill" id="rankBadge">Loading rank…</div>
+        </div>
+
+        <div id="description" class="description">
+          <p class="skeleton" style="border-radius:10px;height:14px;width:95%;margin-bottom:4px"></p>
+          <p class="skeleton" style="border-radius:10px;height:14px;width:80%;margin-bottom:4px"></p>
+          <p class="skeleton" style="border-radius:10px;height:14px;width:70%;"></p>
+        </div>
+
+        <div class="facts-grid" id="factsGrid">
+          <div class="fact-card skeleton" style="height:60px"></div>
+          <div class="fact-card skeleton" style="height:60px"></div>
+        </div>
+      </section>
+
+      <!-- RIGHT: gallery & badges -->
+      <section class="panel" aria-label="Images and quick info">
+        <div class="panel-heading">
+          <div class="panel-title">Images</div>
+          <div class="section-pill">Swipe to browse</div>
+        </div>
+
+        <div id="gallery" class="gallery-strip">
+          <div class="gallery-item skeleton" style="height:210px;border-radius:14px"></div>
+          <div class="gallery-item skeleton" style="height:210px;border-radius:14px"></div>
+        </div>
+
+        <div class="badge-row" id="badgeRow">
+          <!-- badges injected here -->
+        </div>
+
+        <div class="status-line" id="statusLine">
+          Loading images from iNaturalist…
+        </div>
+      </section>
+    </section>
+  </div>
+
+  <!-- Bottom navigation -->
+  <div class="bottom-nav-shell">
+    <nav class="bottom-nav" aria-label="Main navigation">
+      <div class="bottom-nav-inner">
+        <button class="nav-item" onclick="window.location.href='index.html'">
+          <div class="nav-item-icon">📷</div>
+          <span>Camera</span>
+        </button>
+        <button class="nav-item" onclick="window.location.href='index.html#recent'">
+          <div class="nav-item-icon">🕒</div>
+          <span>Recent</span>
+        </button>
+        <button class="nav-item nav-item-active">
+          <div class="nav-item-icon">📇</div>
+          <span>Species</span>
+        </button>
+      </div>
+    </nav>
+  </div>
+
+  <script>
+  (async function(){
+    function getParam(name){
+      const params = new URLSearchParams(window.location.search);
+      return params.get(name) || "";
+    }
+
+    function titleCase(str){
+      return str.replace(/\w\S*/g, txt => txt.charAt(0).toUpperCase() + txt.slice(1));
+    }
+
+    const rawName = getParam("name");
+    const decoded = decodeURIComponent(rawName || "").trim();
+    const scientificName = decoded.replace(/_/g, " ").trim();
+
+    const sciEl = document.getElementById("scientificName");
+    const comEl = document.getElementById("commonName");
+    const tagsRow = document.getElementById("tagsRow");
+    const sourceLine = document.getElementById("sourceLine");
+    const linkRow = document.getElementById("linkRow");
+    const descEl = document.getElementById("description");
+    const factsGrid = document.getElementById("factsGrid");
+    const gallery = document.getElementById("gallery");
+    const badgeRow = document.getElementById("badgeRow");
+    const statusLine = document.getElementById("statusLine");
+    const rankBadge = document.getElementById("rankBadge");
+
+    if(!scientificName){
+      sciEl.innerHTML = '<span style="font-weight:700">Unknown species</span>';
+      comEl.textContent = "No name provided";
+      sourceLine.textContent = "Open this page from the camera app after a prediction.";
+      gallery.innerHTML = '<div class="gallery-item"><div class="gallery-caption">No images available.</div></div>';
+      statusLine.textContent = "Nothing to load yet.";
+      return;
+    }
+
+    sciEl.innerHTML = '<span><i>' + scientificName + '</i></span>';
+
+    // ---------- WIKIPEDIA ----------
+    let wikiData = null;
+    try{
+      const wikiTitle = scientificName.replace(/\s+/g, "_");
+      const wikiRes = await fetch("https://en.wikipedia.org/api/rest_v1/page/summary/" + encodeURIComponent(wikiTitle));
+      if(wikiRes.ok){
+        wikiData = await wikiRes.json();
+      }
+    }catch(e){
+      console.warn("Wikipedia fetch failed", e);
+    }
+
+    // ---------- iNaturalist ----------
+    let inatTaxon = null;
+    try{
+      const query = scientificName;
+      const inatRes = await fetch("https://api.inaturalist.org/v1/taxa?q=" + encodeURIComponent(query) + "&per_page=1");
+      if(inatRes.ok){
+        const json = await inatRes.json();
+        if(json.results && json.results.length){
+          inatTaxon = json.results[0];
+        }
+      }
+    }catch(e){
+      console.warn("iNaturalist fetch failed", e);
+    }
+
+    // ---------- Populate top hero ----------
+    const commonName = (inatTaxon && inatTaxon.preferred_common_name) ||
+                       (wikiData && wikiData.displaytitle && wikiData.displaytitle !== scientificName ? wikiData.displaytitle : "");
+    comEl.textContent = commonName || "Common name not available";
+
+    // Tags
+    tagsRow.innerHTML = "";
+    const rank = inatTaxon && inatTaxon.rank ? inatTaxon.rank : "species";
+    const rankLabel = titleCase(rank);
+    rankBadge.textContent = rankLabel;
+
+    const observationsCount = inatTaxon && typeof inatTaxon.observations_count === "number"
+      ? inatTaxon.observations_count.toLocaleString()
+      : null;
+
+    const tags = [
+      "Rank: " + rankLabel,
+      observationsCount ? observationsCount + " observations (iNaturalist)" : null,
+      wikiData && wikiData.description ? wikiData.description : null
+    ].filter(Boolean);
+
+    if(tags.length === 0){
+      tagsRow.innerHTML = '<span class="tag">Biodiversity profile</span>';
+    }else{
+      tags.forEach(t => {
+        const span = document.createElement("span");
+        span.className = "tag";
+        span.textContent = t;
+        tagsRow.appendChild(span);
+      });
+    }
+
+    // Source line + links
+    linkRow.innerHTML = "";
+    let wikiUrl = wikiData && wikiData.content_urls && wikiData.content_urls.desktop
+      ? wikiData.content_urls.desktop.page
+      : (wikiData && wikiData.wikipedia_url) || null;
+
+    let inatUrl = inatTaxon && inatTaxon.id
+      ? "https://www.inaturalist.org/taxa/" + inatTaxon.id
+      : "https://www.inaturalist.org/search?q=" + encodeURIComponent(scientificName);
+
+    if(wikiData && inatTaxon){
+      sourceLine.textContent = "Details combined from Wikipedia and iNaturalist.";
+    }else if(wikiData){
+      sourceLine.textContent = "Details from Wikipedia.";
+    }else if(inatTaxon){
+      sourceLine.textContent = "Details from iNaturalist.";
+    }else{
+      sourceLine.textContent = "Could not fetch external details. Showing minimal info.";
+    }
+
+    if(inatUrl){
+      const a = document.createElement("a");
+      a.href = inatUrl;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      a.className = "btn btn-primary";
+      a.innerHTML = "🧭 Open in iNaturalist";
+      linkRow.appendChild(a);
+    }
+
+    if(wikiUrl){
+      const b = document.createElement("a");
+      b.href = wikiUrl;
+      b.target = "_blank";
+      b.rel = "noopener noreferrer";
+      b.className = "btn btn-ghost";
+      b.innerHTML = "📚 Open Wikipedia";
+      linkRow.appendChild(b);
+    }
+
+    const g = document.createElement("button");
+    g.className = "btn btn-ghost";
+    g.type = "button";
+    g.onclick = () => {
+      window.open("https://www.google.com/search?q=" + encodeURIComponent(scientificName), "_blank");
+    };
+    g.innerHTML = "🌐 Search web";
+    linkRow.appendChild(g);
+
+    // ---------- Description ----------
+    if(wikiData && wikiData.extract_html){
+      descEl.innerHTML = wikiData.extract_html;
+    }else if(wikiData && wikiData.extract){
+      descEl.textContent = wikiData.extract;
+    }else{
+      descEl.innerHTML = "<p>No detailed description was available from Wikipedia. Try the external links above to learn more.</p>";
+    }
+
+    // ---------- Facts ----------
+    factsGrid.innerHTML = "";
+    const facts = [];
+
+    if(inatTaxon && typeof inatTaxon.observations_count === "number"){
+      facts.push({
+        label: "Observations",
+        value: inatTaxon.observations_count.toLocaleString(),
+        hint: "Number of times this species was recorded on iNaturalist."
+      });
+    }
+
+    if(inatTaxon && inatTaxon.iconic_taxon_name){
+      facts.push({
+        label: "Iconic group",
+        value: inatTaxon.iconic_taxon_name,
+        hint: "Broad group used in iNaturalist (e.g. Birds, Amphibians)."
+      });
+    }
+
+    if(wikiData && wikiData.titles && wikiData.titles.canonical){
+      facts.push({
+        label: "Wikipedia title",
+        value: wikiData.titles.canonical,
+        hint: "Canonical title used by Wikipedia."
+      });
+    }
+
+    if(!facts.length){
+      facts.push({
+        label: "Tip",
+        value: "Use the links above to explore more.",
+        hint: "More structured data may not be available for this taxon."
+      });
+    }
+
+    facts.forEach(f => {
+      const card = document.createElement("div");
+      card.className = "fact-card";
+      card.innerHTML = `
+        <div class="fact-label">${f.label}</div>
+        <div>${f.value}</div>
+        ${f.hint ? `<div style="margin-top:2px;font-size:0.7rem;color:var(--muted)">${f.hint}</div>` : ""}
+      `;
+      factsGrid.appendChild(card);
+    });
+
+    // ---------- Gallery ----------
+    gallery.innerHTML = "";
+
+    const photos = [];
+    if(inatTaxon && inatTaxon.default_photo){
+      photos.push(inatTaxon.default_photo);
+    }
+    if(inatTaxon && Array.isArray(inatTaxon.taxon_photos)){
+      inatTaxon.taxon_photos.forEach(tp => {
+        if(tp.photo) photos.push(tp.photo);
+      });
+    }
+
+    if(photos.length === 0 && wikiData && wikiData.thumbnail){
+      photos.push({
+        medium_url: wikiData.thumbnail.source,
+        attribution: "Image from Wikipedia",
+      });
+    }
+
+    if(photos.length === 0){
+      const fallback = document.createElement("div");
+      fallback.className = "gallery-item";
+      fallback.innerHTML = `<div class="gallery-caption">No images available from iNaturalist or Wikipedia.</div>`;
+      gallery.appendChild(fallback);
+      statusLine.textContent = "No external images were available.";
+    }else{
+      photos.slice(0, 8).forEach((p, idx) => {
+        const url = p.medium_url || p.url || p.square_url;
+        if(!url) return;
+        const item = document.createElement("div");
+        item.className = "gallery-item";
+        item.innerHTML = `
+          <img src="${url}" alt="Species image ${idx+1}">
+          <div class="gallery-caption">
+            ${idx === 0 ? "Primary example image" : "Additional view"}${p.attribution ? " · " + p.attribution : ""}
+          </div>
+        `;
+        gallery.appendChild(item);
+      });
+      statusLine.textContent = "Swipe left/right to explore more example photos.";
+    }
+
+    // ---------- Badges ----------
+    badgeRow.innerHTML = "";
+    const baseBadges = [];
+
+    if(inatTaxon && inatTaxon.vision){
+      baseBadges.push("Supported by iNaturalist computer vision");
+    }
+    if(wikiData && wikiData.titles && wikiData.titles.normalized){
+      baseBadges.push("Wikipedia summary loaded");
+    }
+    baseBadges.push("Auto-generated species profile");
+
+    baseBadges.forEach(b => {
+      const span = document.createElement("span");
+      span.className = "badge";
+      span.textContent = b;
+      badgeRow.appendChild(span);
+    });
+  })();
+  </script>
+
+  <!-- Service worker registration (same SW as index) -->
+  <script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./sw.js").catch(err => {
+        console.warn("SW registration failed", err);
+      });
+    });
+  }
+  </script>
+</body>
+</html>

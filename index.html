@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Smart Object Explorer</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#050816" />
+  <link rel="manifest" href="manifest.json" />
+
+  <style>
+  :root{
+    --bg: #050816;
+    --card-bg: rgba(4,10,20,0.78);
+    --accent-1: #7c3aed;
+    --accent-2: #06b6d4;
+    --accent-3: #f97316;
+    --accent-4: #ec4899;
+    --muted: #99a3b2;
+    --radius-lg: 18px;
+    --text: #e5e7eb;
+    --text-muted: #9ca3af;
+    --border-soft: rgba(148,163,184,0.35);
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+
+  html,body{height:100%}
+
+  body{
+    font-family: system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    background:
+      radial-gradient(circle at top, rgba(96,165,250,0.18), transparent 60%),
+      radial-gradient(circle at bottom, rgba(56,189,248,0.18), transparent 60%),
+      url("camp2.jpg") no-repeat center center fixed;
+    background-size: cover;
+    color:var(--text);
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:flex-start;
+    padding:16px;
+  }
+
+  .app{
+    width:100%;
+    max-width:1100px;
+    margin-top:72px;
+    margin-bottom:32px;
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    padding-bottom:74px; /* space for bottom nav */
+  }
+
+  #topLogo{
+    position:fixed;
+    top:10px;
+    left:50%;
+    transform:translateX(-50%);
+    width:260px;
+    max-width:70%;
+    height:auto;
+    z-index:40;
+    padding:8px 14px;
+    border-radius:999px;
+    background:rgba(5,6,17,0.7);
+    backdrop-filter:blur(12px);
+    border:1px solid var(--border-soft);
+  }
+
+  header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:12px;
+    padding:12px 10px;
+    border-radius:18px;
+    background:rgba(5,6,17,0.9);
+    border:1px solid var(--border-soft);
+    box-shadow:0 18px 45px rgba(15,23,42,0.85);
+  }
+
+  .title{
+    font-weight:700;
+    font-size:1.3rem;
+    display:flex;
+    gap:10px;
+    align-items:center;
+  }
+  .logo-dot{
+    width:14px;height:14px;border-radius:999px;
+    background:conic-gradient(from 120deg,#7c3aed,#06b6d4,#ec4899);
+    box-shadow:0 0 18px rgba(56,189,248,0.9);
+  }
+  .subtitle{
+    color:var(--text-muted);
+    font-size:0.85rem;
+    margin-top:4px;
+  }
+
+  .pill{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:6px 10px;
+    border-radius:999px;
+    background:linear-gradient(90deg,#0ea5e9,#7c3aed);
+    color:white;
+    font-size:0.78rem;
+    font-weight:600;
+    box-shadow:0 10px 30px rgba(15,23,42,0.9);
+  }
+  .pill-dot{
+    width:8px;height:8px;border-radius:999px;
+    background:#22c55e;
+    box-shadow:0 0 12px rgba(34,197,94,0.9);
+  }
+
+  .helper-strip{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    padding:10px 12px;
+    border-radius:999px;
+    border:1px solid rgba(148,163,184,0.18);
+    background:rgba(15,23,42,0.9);
+    color:var(--text-muted);
+    font-size:0.8rem;
+    align-items:center;
+  }
+  .helper-divider{
+    width:1px;height:18px;background:rgba(148,163,184,0.35);
+  }
+
+  main#view-camera{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+  }
+
+  .card{
+    border-radius:var(--radius-lg);
+    background:linear-gradient(145deg,rgba(15,23,42,0.92),rgba(15,23,42,0.86));
+    border:1px solid var(--border-soft);
+    padding:14px;
+    box-shadow:0 24px 60px rgba(15,23,42,0.95);
+    position:relative;
+  }
+
+  .section-label{
+    font-weight:800;
+    font-size:0.78rem;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:var(--text-muted);
+  }
+
+  .camera-frame{
+    position:relative;
+    border-radius:16px;
+    overflow:hidden;
+    border:1px solid rgba(148,163,184,0.28);
+    aspect-ratio:4/3;
+    background:radial-gradient(circle at top,rgba(15,23,42,0.95),rgba(15,23,42,1));
+  }
+  video#camera{width:100%;height:100%;object-fit:cover}
+  canvas#captureCanvas,canvas#overlayCanvas{display:none}
+  .qr-overlay{position:absolute;inset:0;pointer-events:none}
+
+  .hud{
+    position:absolute;
+    top:10px;
+    left:50%;
+    transform:translateX(-50%);
+    background:rgba(15,23,42,0.82);
+    padding:5px 9px;
+    border-radius:999px;
+    border:1px solid rgba(148,163,184,0.4);
+    display:inline-flex;
+    gap:7px;
+    align-items:center;
+    color:var(--text-muted);
+    font-size:0.76rem;
+  }
+
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    border:1px solid rgba(148,163,184,0.5);
+    padding:7px 11px;
+    border-radius:999px;
+    background:rgba(15,23,42,0.9);
+    color:var(--text);
+    cursor:pointer;
+    font-weight:600;
+    font-size:0.82rem;
+    transition:transform 0.12s ease,box-shadow 0.12s ease,background 0.12s ease,border-color 0.12s ease;
+  }
+  .btn:hover{
+    transform:translateY(-2px);
+    box-shadow:0 14px 28px rgba(15,23,42,0.9);
+    background:rgba(17,24,39,1);
+  }
+
+  .btn-primary{
+    background:linear-gradient(90deg,var(--accent-2),var(--accent-1));
+    border:none;
+    color:#fff;
+    font-weight:700;
+    box-shadow:0 16px 40px rgba(56,189,248,0.45);
+  }
+
+  .btn-ghost{
+    background:transparent;
+    border-color:rgba(148,163,184,0.4);
+    color:var(--text-muted);
+  }
+
+  .capture-wrap{position:relative;display:inline-block}
+
+  button.capture{
+    border-radius:999px;
+    padding:10px 19px;
+    background:linear-gradient(90deg,var(--accent-3),var(--accent-4));
+    color:#fff;
+    font-weight:800;
+    border:none;
+    cursor:pointer;
+    box-shadow:0 16px 42px rgba(248,113,113,0.4);
+    font-size:0.9rem;
+  }
+
+  .result-card{
+    border-radius:16px;
+    overflow:hidden;
+    position:relative;
+    background:radial-gradient(circle at top left,rgba(56,189,248,0.14),transparent 55%),
+               radial-gradient(circle at bottom right,rgba(168,85,247,0.18),transparent 55%),
+               rgba(15,23,42,0.96);
+    padding:0;
+    display:grid;
+    grid-template-columns: minmax(0,1.05fr) minmax(0,1.1fr);
+    border:1px solid rgba(148,163,184,0.38);
+  }
+
+  .result-image-wrap{
+    position:relative;
+    overflow:hidden;
+  }
+  .result-image{width:100%;height:100%;object-fit:cover;display:block}
+  .chip{
+    position:absolute;
+    left:10px;
+    bottom:10px;
+    background:linear-gradient(120deg,var(--accent-2),var(--accent-1));
+    padding:6px 10px;
+    border-radius:999px;
+    color:white;
+    font-weight:700;
+    font-size:0.75rem;
+    border:1px solid rgba(248,250,252,0.7);
+    box-shadow:0 12px 30px rgba(15,23,42,0.9);
+  }
+
+  .result-content{
+    padding:12px 14px;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+  .result-species{
+    font-weight:800;
+    font-size:1.05rem;
+  }
+  .confidence{
+    font-size:0.85rem;
+    color:var(--text-muted);
+  }
+  .prediction-list{
+    margin-top:4px;
+    padding-left:18px;
+    font-size:0.8rem;
+    color:var(--text-muted);
+  }
+  .prediction-list li{margin-bottom:2px;}
+
+  .status-line{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    color:var(--text-muted);
+    font-size:0.8rem;
+  }
+
+  .footer-msg{
+    margin-top:4px;
+    color:var(--text-muted);
+    font-size:0.8rem;
+    display:flex;
+    justify-content:space-between;
+    gap:8px;
+    align-items:center;
+    padding:4px 2px 0 2px;
+  }
+
+  /* RECENT VIEW */
+  #view-recent{
+    display:none;
+    margin-top:4px;
+  }
+
+  .recent-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:8px;
+  }
+
+  .recent-list{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+
+  .recent-item{
+    display:flex;
+    gap:10px;
+    border-radius:14px;
+    padding:8px 9px;
+    background:rgba(15,23,42,0.96);
+    border:1px solid rgba(148,163,184,0.32);
+  }
+
+  .recent-thumb{
+    width:56px;height:56px;
+    border-radius:10px;
+    background-size:cover;
+    background-position:center;
+    background-color:#020617;
+    flex-shrink:0;
+  }
+
+  .recent-main{
+    flex:1;
+    min-width:0;
+  }
+
+  .recent-name{
+    font-size:0.9rem;
+    font-weight:600;
+  }
+  .recent-meta{
+    font-size:0.75rem;
+    color:var(--text-muted);
+    margin-top:2px;
+  }
+  .recent-actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-top:6px;
+  }
+  .btn-xs{
+    padding:5px 9px;
+    font-size:0.75rem;
+  }
+
+  .status-chip{
+    font-size:0.75rem;
+    padding:4px 8px;
+    border-radius:999px;
+    border:1px solid rgba(148,163,184,0.35);
+    color:var(--text-muted);
+  }
+
+  /* BOTTOM NAV */
+  .bottom-nav-shell{
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    display:flex;
+    justify-content:center;
+    z-index:50;
+    pointer-events:none;
+  }
+
+  .bottom-nav{
+    width:100%;
+    max-width:1100px;
+    padding:6px 14px 10px;
+    pointer-events:auto;
+  }
+
+  .bottom-nav-inner{
+    border-radius:999px;
+    padding:6px 10px;
+    background:rgba(15,23,42,0.96);
+    border:1px solid rgba(148,163,184,0.5);
+    backdrop-filter:blur(18px);
+    display:flex;
+    justify-content:space-around;
+    gap:6px;
+  }
+
+  .nav-item{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:2px;
+    border:none;
+    background:transparent;
+    color:var(--text-muted);
+    cursor:pointer;
+    font-size:0.72rem;
+    padding:4px 0;
+  }
+  .nav-item-icon{
+    width:18px;
+    height:18px;
+    border-radius:999px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin-bottom:1px;
+  }
+  .nav-item span{
+    font-size:0.72rem;
+  }
+
+  .nav-item-active{
+    color:#e5e7eb;
+  }
+  .nav-item-active .nav-item-icon{
+    background:linear-gradient(135deg,var(--accent-2),var(--accent-1));
+    box-shadow:0 10px 24px rgba(56,189,248,0.45);
+  }
+
+  .hidden{display:none !important;}
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  /* MOBILE */
+  @media (max-width: 860px){
+    body{
+      padding:12px;
+    }
+    .app{
+      margin-top:82px;
+    }
+    main#view-camera{
+      grid-template-columns:1fr;
+    }
+    .result-card{
+      grid-template-columns:1fr;
+    }
+    #topLogo{
+      width:210px;
+      padding:6px 10px;
+    }
+    .footer-msg{
+      flex-direction:column;
+      align-items:flex-start;
+    }
+  }
+  </style>
+</head>
+
+<body>
+  <img id="topLogo" src="Agastya logo.avif" alt="Agastya Logo">
+
+  <div class="app" role="application" aria-label="Smart Object Explorer">
+    <header>
+      <div>
+        <div class="title">
+          <span class="logo-dot"></span>
+          Smart Object Explorer
+        </div>
+        <div class="subtitle">
+          Point the camera, capture a frame, and instantly see what species it might be.
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+        <div class="pill">
+          <span class="pill-dot"></span>
+          Live camera · Cloud model
+        </div>
+        <button id="installBtn" class="pill hidden" style="background:rgba(15,23,42,0.96);border:1px solid rgba(148,163,184,0.7);box-shadow:none;">
+          ⬇ Install app
+        </button>
+      </div>
+    </header>
+
+    <section class="helper-strip">
+      <strong>1</strong> Place object
+      <div class="helper-divider"></div>
+      <strong>2</strong> Capture
+      <div class="helper-divider"></div>
+      <strong>3</strong> View prediction &amp; open species card
+    </section>
+
+    <!-- CAMERA VIEW -->
+    <main id="view-camera" aria-label="Camera view">
+      <!-- CAMERA CARD -->
+      <section class="card" aria-label="Camera capture panel">
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div class="section-label">Capture</div>
+            <div style="background:linear-gradient(90deg,var(--accent-1),var(--accent-2));padding:6px 10px;border-radius:999px;color:white;font-weight:700;font-size:0.78rem">📷 Live camera</div>
+          </div>
+
+          <div class="camera-frame" role="region" aria-label="Camera preview">
+            <video id="camera" autoplay playsinline muted></video>
+            <canvas id="captureCanvas"></canvas>
+            <canvas id="overlayCanvas" class="qr-overlay"></canvas>
+            <div class="hud" aria-hidden="true">
+              <span style="width:7px;height:7px;background:#22c55e;border-radius:999px;box-shadow:0 0 12px rgba(34,197,94,0.9)"></span>
+              Live preview
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-top:4px">
+            <div style="color:var(--text-muted);font-size:0.8rem">
+              Tip: Hold steady, then tap <strong>Capture</strong>. Spacebar = capture, “R” = reset.
+            </div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <button class="btn btn-ghost" id="flipBtn" title="Flip camera" aria-label="Flip camera">🔁 Flip</button>
+              <button id="retakeBtn" class="btn" aria-label="Reset capture" disabled>
+                ↺ Reset
+              </button>
+              <div class="capture-wrap">
+                <button id="captureBtn" class="capture" title="Capture (Space)">Capture •</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RESULT CARD -->
+      <section class="card" aria-label="Recognition result panel">
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div class="section-label">Result</div>
+            <div class="status-line">
+              <span id="statusSpinner" class="hidden" style="width:12px;height:12px;border-radius:999px;border:2px solid rgba(148,163,184,0.3);border-top-color:#06b6d4;animation:spin 0.9s linear infinite"></span>
+              <span id="statusText">Initializing…</span>
+            </div>
+          </div>
+
+          <div id="predictionContainer">
+            <p style="color:var(--text-muted);font-size:0.86rem">
+              No capture yet. Take a picture to see the predicted species and open a full species card.
+            </p>
+          </div>
+
+          <div class="history-block" style="border-radius:12px;padding:10px;background:linear-gradient(180deg,rgba(15,23,42,0.98),rgba(15,23,42,0.9));border:1px dashed rgba(148,163,184,0.32)">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <div style="font-weight:700;color:var(--text-muted);font-size:0.78rem;text-transform:uppercase;letter-spacing:0.12em">Recent captures</div>
+              <button id="clearHistoryBtn" class="btn btn-ghost btn-xs" title="Clear capture history" disabled style="opacity:0.7">✕ Clear</button>
+            </div>
+            <div id="historyList" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;font-size:0.78rem;color:var(--text-muted)">
+              <span>No recent captures yet.</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- RECENT VIEW -->
+    <section id="view-recent" aria-label="Recent species view">
+      <section class="card">
+        <div class="recent-header">
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <div class="section-label">Recent species</div>
+            <div style="font-size:0.82rem;color:var(--text-muted)">
+              Last few captures stored on this device only.
+            </div>
+          </div>
+          <span class="status-chip" id="recentStatusChip">0 items</span>
+        </div>
+
+        <div id="recentList" class="recent-list">
+          <div style="font-size:0.82rem;color:var(--text-muted)">
+            No captures yet. Go to the Camera tab, capture a few species, then come back here.
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <footer class="footer-msg">
+      <div>Keyboard: <strong>Space</strong> capture · <strong>R</strong> reset</div>
+      <div>Use the tabs below to switch between Camera and Recent species.</div>
+    </footer>
+  </div>
+
+  <!-- Bottom navigation -->
+  <div class="bottom-nav-shell">
+    <nav class="bottom-nav" aria-label="Main navigation">
+      <div class="bottom-nav-inner">
+        <button class="nav-item nav-item-active" data-view-target="camera">
+          <div class="nav-item-icon">📷</div>
+          <span>Camera</span>
+        </button>
+        <button class="nav-item" data-view-target="recent">
+          <div class="nav-item-icon">🕒</div>
+          <span>Recent</span>
+        </button>
+      </div>
+    </nav>
+  </div>
+
+  <script>
+  (function(){
+    const API_URL = "https://vigneshragrahar-species.hf.space/predict";
+    const HISTORY_KEY = "soxRecentSpeciesV1";
+
+    let currentStream = null;
+    let usingFrontCamera = false;
+    let deferredPrompt = null;
+
+    const videoEl = document.getElementById("camera");
+    const canvasEl = document.getElementById("captureCanvas");
+    const captureBtn = document.getElementById("captureBtn");
+    const retakeBtn = document.getElementById("retakeBtn");
+    const flipBtn = document.getElementById("flipBtn");
+    const statusText = document.getElementById("statusText");
+    const statusSpinner = document.getElementById("statusSpinner");
+    const predictionContainer = document.getElementById("predictionContainer");
+    const historyListEl = document.getElementById("historyList");
+    const clearHistoryBtn = document.getElementById("clearHistoryBtn");
+    const viewCamera = document.getElementById("view-camera");
+    const viewRecent = document.getElementById("view-recent");
+    const navButtons = document.querySelectorAll(".nav-item[data-view-target]");
+    const recentListEl = document.getElementById("recentList");
+    const recentStatusChip = document.getElementById("recentStatusChip");
+    const installBtn = document.getElementById("installBtn");
+
+    function escapeHtml(s){
+      return (s+"").replace(/[&<>"'`=\/]/g, c => ({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','/':'&#x2F;','`':'&#x60;','=':'&#x3D;'
+      }[c]));
+    }
+
+    function setStatus(text, loading){
+      if(statusText) statusText.textContent = text;
+      if(statusSpinner) statusSpinner.classList.toggle("hidden", !loading);
+    }
+
+    async function initCamera(){
+      if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+        throw new Error("Camera API not supported in this browser.");
+      }
+      const constraints = {
+        video: { facingMode: usingFrontCamera ? "user" : "environment" },
+        audio: false
+      };
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      currentStream = stream;
+      videoEl.srcObject = stream;
+      await videoEl.play().catch(()=>{});
+    }
+
+    function stopStream(){
+      if(currentStream){
+        currentStream.getTracks().forEach(t => t.stop());
+        currentStream = null;
+      }
+    }
+
+    function captureFrame(){
+      const w = videoEl.videoWidth;
+      const h = videoEl.videoHeight;
+      if(!w || !h) return false;
+      canvasEl.width = w;
+      canvasEl.height = h;
+      const ctx = canvasEl.getContext("2d");
+      ctx.drawImage(videoEl, 0, 0, w, h);
+      return true;
+    }
+
+    function loadHistory(){
+      try{
+        const raw = localStorage.getItem(HISTORY_KEY);
+        if(!raw) return [];
+        const arr = JSON.parse(raw);
+        return Array.isArray(arr) ? arr : [];
+      }catch(e){
+        console.warn("History parse failed", e);
+        return [];
+      }
+    }
+
+    function saveHistory(list){
+      try{
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
+      }catch(e){
+        console.warn("History save failed", e);
+      }
+    }
+
+    function formatTime(ts){
+      const d = new Date(ts);
+      return d.toLocaleString(undefined, {
+        day:"2-digit", month:"short", hour:"2-digit", minute:"2-digit"
+      });
+    }
+
+    function updateHistoryUI(list){
+      // small horizontal chips under result card
+      if(!list.length){
+        historyListEl.innerHTML = '<span>No recent captures yet.</span>';
+        clearHistoryBtn.disabled = true;
+      }else{
+        clearHistoryBtn.disabled = false;
+        historyListEl.innerHTML = list.slice(0, 12).map(item => {
+          const confPct = (item.confidence * 100).toFixed(0);
+          return `<div style="border-radius:999px;border:1px solid rgba(148,163,184,0.3);padding:4px 8px;white-space:nowrap;">
+            ${escapeHtml(item.name)} · ${confPct}%
+          </div>`;
+        }).join("");
+      }
+
+      // full recent view
+      recentStatusChip.textContent = list.length + " item" + (list.length === 1 ? "" : "s");
+
+      if(!list.length){
+        recentListEl.innerHTML = `
+          <div style="font-size:0.82rem;color:var(--text-muted)">
+            No captures yet. Go to the Camera tab, capture a few species, then come back here.
+          </div>`;
+        return;
+      }
+
+      recentListEl.innerHTML = list.map(entry => {
+        const confPct = (entry.confidence * 100).toFixed(1);
+        const when = formatTime(entry.ts);
+        const imgStyle = entry.previewUrl
+          ? `background-image:url('${entry.previewUrl.replace(/'/g,"&#39;")}');`
+          : "";
+
+        const encodedName = encodeURIComponent(entry.name);
+
+        return `
+          <div class="recent-item">
+            <div class="recent-thumb" style="${imgStyle}"></div>
+            <div class="recent-main">
+              <div class="recent-name">${escapeHtml(entry.name)}</div>
+              <div class="recent-meta">${confPct}% · ${escapeHtml(when)}</div>
+              <div class="recent-actions">
+                <a class="btn btn-primary btn-xs" href="species.html?name=${encodedName}">
+                  🔍 Open species card
+                </a>
+                <button class="btn btn-ghost btn-xs" onclick="window.open('https://www.google.com/search?q=${encodeURIComponent(entry.name)}','_blank')">
+                  🌐 Search
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function addToHistory(name, confidence, previewUrl){
+      const entry = {
+        name,
+        confidence,
+        previewUrl,
+        ts: Date.now()
+      };
+      let list = loadHistory();
+      list.unshift(entry);
+      list = list.slice(0, 10);
+      saveHistory(list);
+      updateHistoryUI(list);
+    }
+
+    function sendToApi(){
+      setStatus("Sending to model…", true);
+
+      canvasEl.toBlob(async (blob) => {
+        if(!blob){
+          setStatus("Could not read image.", false);
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append("file", blob, "capture.jpg");
+
+        try{
+          const res = await fetch(API_URL, { method:"POST", body:formData });
+          if(!res.ok){
+            throw new Error("Server error: " + res.status);
+          }
+          const data = await res.json();
+          renderPrediction(data);
+          setStatus("Done.", false);
+        }catch(err){
+          console.error(err);
+          predictionContainer.innerHTML =
+            '<p style="color:var(--text-muted)">Error: ' + escapeHtml(err.message) + '</p>';
+          setStatus("Prediction failed.", false);
+        }
+      }, "image/jpeg", 0.9);
+    }
+
+    function renderPrediction(data){
+      const top1 = data && data.top1;
+      if(!top1){
+        predictionContainer.innerHTML =
+          '<p style="color:var(--text-muted)">No prediction returned by the API.</p>';
+        return;
+      }
+
+      const confPct = (top1.confidence * 100).toFixed(1);
+      const previewUrl = canvasEl.toDataURL("image/jpeg", 0.9);
+      const topk = data.topk || [];
+
+      // update history
+      addToHistory(top1.species, top1.confidence, previewUrl);
+
+      const listHtml = topk.map(item => {
+        const c = (item.confidence * 100).toFixed(1);
+        return '<li>' + escapeHtml(item.species) + ': ' + c + '%</li>';
+      }).join("");
+
+      const encodedName = encodeURIComponent(top1.species);
+
+      predictionContainer.innerHTML = `
+        <div class="result-card" role="region" aria-live="polite">
+          <div class="result-image-wrap">
+            <img src="${previewUrl}" class="result-image" alt="Captured image" />
+            <div class="chip">Top match · ${confPct}%</div>
+          </div>
+          <div class="result-content">
+            <div class="result-species">${escapeHtml(top1.species)}</div>
+            <div class="confidence">Confidence: ${confPct}%</div>
+
+            ${listHtml ? `
+              <details style="margin-top:4px">
+                <summary style="cursor:pointer;color:var(--text-muted);font-size:0.8rem">See all predictions</summary>
+                <ul class="prediction-list">${listHtml}</ul>
+              </details>
+            ` : ""}
+
+            <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:8px">
+              <a class="btn btn-primary" href="species.html?name=${encodedName}">
+                🔍 View species card
+              </a>
+              <button class="btn btn-ghost" onclick="window.open('https://www.google.com/search?q=${encodeURIComponent(top1.species)}','_blank')">
+                🌐 Search this species
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    async function onCapture(){
+      if(!captureFrame()){
+        setStatus("Camera not ready yet. Try again.", false);
+        return;
+      }
+      retakeBtn.disabled = false;
+      sendToApi();
+    }
+
+    function onReset(){
+      predictionContainer.innerHTML =
+        '<p style="color:var(--text-muted);font-size:0.86rem">Reset complete. Capture a new image to see predictions.</p>';
+    }
+
+    function setView(view){
+      if(view === "recent"){
+        viewCamera.style.display = "none";
+        viewRecent.style.display = "block";
+      }else{
+        viewCamera.style.display = "grid";
+        viewRecent.style.display = "none";
+      }
+
+      navButtons.forEach(btn => {
+        const target = btn.getAttribute("data-view-target");
+        if(target === view){
+          btn.classList.add("nav-item-active");
+        }else{
+          btn.classList.remove("nav-item-active");
+        }
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      setStatus("Requesting camera…", true);
+
+      // initial history load
+      updateHistoryUI(loadHistory());
+
+      initCamera()
+        .then(() => setStatus("Camera ready. Capture to classify.", false))
+        .catch(err => {
+          console.error(err);
+          setStatus("Camera error: " + err.message, false);
+        });
+
+      if(captureBtn) captureBtn.addEventListener("click", onCapture);
+      if(retakeBtn) retakeBtn.addEventListener("click", onReset);
+
+      if(flipBtn) flipBtn.addEventListener("click", async () => {
+        usingFrontCamera = !usingFrontCamera;
+        stopStream();
+        try{
+          await initCamera();
+        }catch(err){
+          console.error(err);
+          setStatus("Camera error: " + err.message, false);
+        }
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if(e.code === "Space"){
+          e.preventDefault();
+          onCapture();
+        }
+        if(e.key === "r" || e.key === "R"){
+          onReset();
+        }
+      });
+
+      navButtons.forEach(btn => {
+        btn.addEventListener("click", () => {
+          const target = btn.getAttribute("data-view-target");
+          setView(target);
+        });
+      });
+
+      clearHistoryBtn.addEventListener("click", () => {
+        if(!confirm("Clear all recent species on this device?")) return;
+        saveHistory([]);
+        updateHistoryUI([]);
+      });
+
+      // PWA install prompt
+      window.addEventListener("beforeinstallprompt", (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        if(installBtn) installBtn.classList.remove("hidden");
+      });
+
+      if(installBtn){
+        installBtn.addEventListener("click", async () => {
+          if(!deferredPrompt) return;
+          deferredPrompt.prompt();
+          const { outcome } = await deferredPrompt.userChoice;
+          console.log("Install prompt outcome:", outcome);
+          deferredPrompt = null;
+          installBtn.classList.add("hidden");
+        });
+      }
+
+      // If URL contains #recent, open recent tab initially
+      if(window.location.hash === "#recent"){
+        setView("recent");
+      }else{
+        setView("camera");
+      }
+    });
+  })();
+  </script>
+
+  <!-- Service worker registration -->
+  <script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./sw.js").catch(err => {
+        console.warn("SW registration failed", err);
+      });
+    });
+  }
+  </script>
+</body>
+</html>
